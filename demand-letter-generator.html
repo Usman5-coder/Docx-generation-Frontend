@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSV Document Processor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(
+          180deg,
+          #ffffff 20%,
+          #bababa 150%,
+          #a8a8a8 100%
+        );
+        color: #e0e0e0;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+      .navbar {
+        font-family: "Poppins", sans-serif;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 0.5rem 0;
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 1000;
+        transition: all 0.3s ease;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      }
+
+      .navbar.scrolled {
+        padding: 0.3rem 0;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .nav-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #212529;
+        text-decoration: none;
+        letter-spacing: -2px;
+        position: relative;
+        transition: all 0.3s ease;
+      }
+
+      .logo::before {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #495057, #6c757d);
+        transition: width 0.3s ease;
+      }
+
+      .logo:hover::before {
+        width: 100%;
+      }
+
+      .logo:hover {
+        transform: translateY(-2px);
+      }
+
+      .nav-links {
+        display: flex;
+        list-style: none;
+        gap: 2.5rem;
+        align-items: center;
+      }
+
+      .nav-links li {
+        position: relative;
+      }
+
+      .nav-links a {
+        text-decoration: none;
+        color: #495057;
+        font-weight: 500;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .nav-links a:hover {
+        color: #212529;
+        background: rgba(108, 117, 125, 0.1);
+        transform: translateY(-2px);
+      }
+
+      .nav-links a::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 0;
+        height: 2px;
+        background: #495057;
+        transition: all 0.3s ease;
+        transform: translateX(-50%);
+      }
+
+      .nav-links a:hover::after {
+        width: 80%;
+      }
+
+      .hamburger {
+        display: none;
+        flex-direction: column;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+      }
+
+      .hamburger:hover {
+        background: rgba(108, 117, 125, 0.1);
+      }
+
+      .hamburger span {
+        width: 25px;
+        height: 3px;
+        background: #495057;
+        margin: 3px 0;
+        transition: all 0.3s ease;
+        border-radius: 3px;
+      }
+
+      .hamburger.active span:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+      }
+
+      .hamburger.active span:nth-child(2) {
+        opacity: 0;
+      }
+
+      .hamburger.active span:nth-child(3) {
+        transform: rotate(-45deg) translate(7px, -6px);
+      }
+
+      .mobile-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(15px);
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        animation: slideDown 0.3s ease;
+      }
+
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .mobile-menu.active {
+        display: block;
+      }
+
+      .mobile-menu ul {
+        list-style: none;
+        padding: 1rem 0;
+      }
+
+      .mobile-menu li {
+        margin: 0.5rem 0;
+      }
+
+      .mobile-menu a {
+        display: block;
+        padding: 1rem 2rem;
+        color: #495057;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border-left: 3px solid transparent;
+      }
+
+      .mobile-menu a:hover {
+        background: rgba(108, 117, 125, 0.1);
+        border-left-color: #495057;
+        padding-left: 2.5rem;
+      }
+
+      @media (max-width: 768px) {
+        .nav-links {
+          display: none;
+        }
+
+        .hamburger {
+          display: flex;
+        }
+
+        .nav-container {
+          padding: 0 1rem;
+        }
+
+        .logo {
+          font-size: 2rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .logo {
+          font-size: 1.8rem;
+        }
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 3rem;
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      .header h1 {
+        font-size: 3.5rem;
+        font-weight: 500;
+        background: linear-gradient(45deg, #000000, #000000, #000000);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
+        letter-spacing: -1px;
+        margin-top: 4rem;
+      }
+
+      .header p {
+        font-size: 1.2rem;
+        color: #000000;
+        font-weight: 350;
+      }
+
+      .upload-section {
+        background: rgb(255, 255, 255);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(105, 105, 105, 0.5);
+        border-radius: 20px;
+        padding: 3rem;
+        width: 100%;
+        max-width: 600px;
+        text-align: center;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        opacity: 0;
+        transform: translateY(50px);
+      }
+
+      .upload-area {
+        border: 2px dashed rgba(143, 143, 143, 0.6);
+        border-radius: 15px;
+        padding: 3rem 2rem;
+        margin: 2rem 0;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .upload-area:hover {
+        border-color: rgba(192, 192, 192, 0.6);
+        background: rgba(192, 192, 192, 0.02);
+        transform: scale(1.02);
+      }
+
+      .upload-area.dragover {
+        border-color: #c0c0c0;
+        background: rgba(192, 192, 192, 0.05);
+        transform: scale(1.02);
+      }
+
+      .upload-icon {
+        font-size: 4rem;
+        color: #c0c0c0;
+        margin-bottom: 1rem;
+        opacity: 0.7;
+      }
+
+      .upload-text {
+        font-size: 1.3rem;
+        color: #000000;
+        margin-bottom: 0.5rem;
+        font-weight: 400;
+      }
+
+      .upload-subtext {
+        font-size: 0.9rem;
+        color: #666;
+      }
+
+      .file-input {
+        display: none;
+      }
+
+      .process-btn {
+        background: linear-gradient(45deg, #2a2a2a, #3a3a3a);
+        border: 1px solid rgba(192, 192, 192, 0.3);
+        color: #ffffff;
+        padding: 1rem 3rem;
+        border-radius: 50px;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 300;
+        letter-spacing: 0.5px;
+        margin-top: 2rem;
+        opacity: 0.5;
+        pointer-events: none;
+      }
+
+      .process-btn.active {
+        opacity: 1;
+        pointer-events: auto;
+        background: linear-gradient(45deg, #3a3a3a, #4a4a4a);
+        box-shadow: 0 10px 30px rgba(192, 192, 192, 0.1);
+      }
+
+      .process-btn.active:hover {
+        background: linear-gradient(45deg, #4a4a4a, #5a5a5a);
+        transform: translateY(-2px);
+        box-shadow: 0 15px 40px rgba(192, 192, 192, 0.15);
+      }
+
+      .loading {
+        display: none;
+        margin-top: 2rem;
+      }
+
+      .loading-spinner {
+        width: 60px;
+        height: 60px;
+        border: 3px solid rgba(192, 192, 192, 0.1);
+        border-top: 3px solid #c0c0c0;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+      }
+
+      .loading-text {
+        color: #000000;
+        font-size: 1.1rem;
+        font-weight: 300;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .result-section {
+        display: none;
+        margin-top: 2rem;
+        text-align: center;
+      }
+
+      .download-btn {
+        background: linear-gradient(45deg, #c0c0c0, #d0d0d0);
+        color: #1a1a1a;
+        border: none;
+        padding: 1rem 3rem;
+        border-radius: 50px;
+        font-size: 1.1rem;
+        cursor: pointer;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 1.5rem;
+      }
+
+      .download-btn:hover {
+        background: linear-gradient(45deg, #d0d0d0, #e0e0e0);
+        transform: translateY(-2px);
+        box-shadow: 0 15px 40px rgba(192, 192, 192, 0.2);
+      }
+
+      .file-info {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: rgba(192, 192, 192, 0.05);
+        border-radius: 10px;
+        border: 1px solid rgba(192, 192, 192, 0.1);
+        display: none;
+      }
+
+      .error {
+        background: rgba(220, 38, 38, 0.1);
+        border: 1px solid rgba(220, 38, 38, 0.3);
+        color: #fca5a5;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-top: 1rem;
+        display: none;
+      }
+
+      .success {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        color: #86efac;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-top: 1rem;
+        display: none;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 1rem;
+        }
+
+        .header h1 {
+          font-size: 2.5rem;
+        }
+
+        .upload-section {
+          padding: 2rem 1.5rem;
+        }
+
+        .upload-area {
+          padding: 2rem 1rem;
+        }
+      }
+
+      /* Particle animation background */
+      .particles {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      .particle {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background: rgba(192, 192, 192, 0.1);
+        border-radius: 50%;
+      }
+      footer {
+        background: linear-gradient(135deg, #000000, #434343);
+        color: #fff;
+        text-align: center;
+        padding: 42px 12px;
+        font-size: 1.2rem;
+        font-weight: 400;
+        width: 100vw;
+        margin-top: 2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="particles"></div>
+    <nav class="navbar" id="navbar">
+      <div class="nav-container">
+        <a href="#" class="logo">DLG</a>
+
+        <ul class="nav-links">
+          <li><a href="index.html">Home</a></li>
+          <li>
+            <a href="demand-letter-generator.html">Demand Letter Generator</a>
+          </li>
+          <li><a href="chatbot.html">Chat to Improve</a></li>
+        </ul>
+
+        <div class="hamburger" id="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+
+      <div class="mobile-menu" id="mobile-menu">
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li>
+            <a href="demand-letter-generator.html">Demand Letter Generator</a>
+          </li>
+          <li><a href="chatbot.html">Chat to Improve</a></li>
+        </ul>
+      </div>
+    </nav>
+    <div class="container">
+      <div class="header">
+        <h1>Demand Letter Generator</h1>
+        <p>Transform your CSV data into professional Demand Letters</p>
+      </div>
+
+      <div class="upload-section">
+        <div class="upload-area" id="uploadArea">
+          <div class="upload-icon">📊</div>
+          <div class="upload-text">Drop your CSV file here</div>
+          <div class="upload-subtext">or click to browse</div>
+          <input type="file" id="fileInput" class="file-input" accept=".csv" />
+        </div>
+
+        <div class="file-info" id="fileInfo">
+          <strong>Selected file:</strong> <span id="fileName"></span><br />
+          <strong>Size:</strong> <span id="fileSize"></span>
+        </div>
+
+        <button class="process-btn" id="processBtn">Process Document</button>
+
+        <div class="loading" id="loading">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">Processing your document...</div>
+        </div>
+
+        <div class="result-section" id="resultSection">
+          <div class="success" id="successMsg">
+            Document processed successfully!
+          </div>
+          <a href="#" class="download-btn" id="downloadBtn" download>
+            Download Document
+          </a>
+        </div>
+
+        <div class="error" id="errorMsg"></div>
+      </div>
+    </div>
+    <footer>
+      <span id="year"></span> © Demand Letter Generator. All rights reserved.
+    </footer>
+    <script>
+      // Initialize GSAP animations
+      gsap.registerPlugin();
+
+      // Animate elements on load
+      gsap
+        .timeline()
+        .to(".header", { opacity: 1, y: 0, duration: 1, ease: "power2.out" })
+        .to(
+          ".upload-section",
+          { opacity: 1, y: 0, duration: 1, ease: "power2.out" },
+          "-=0.5"
+        );
+
+      // Create floating particles
+      function createParticles() {
+        const particlesContainer = document.querySelector(".particles");
+        const particleCount = 50;
+
+        for (let i = 0; i < particleCount; i++) {
+          const particle = document.createElement("div");
+          particle.className = "particle";
+          particle.style.left = Math.random() * 100 + "%";
+          particle.style.top = Math.random() * 100 + "%";
+          particlesContainer.appendChild(particle);
+
+          gsap.to(particle, {
+            x: Math.random() * 200 - 100,
+            y: Math.random() * 200 - 100,
+            duration: Math.random() * 10 + 10,
+            repeat: -1,
+            yoyo: true,
+            ease: "sine.inOut",
+          });
+
+          gsap.to(particle, {
+            opacity: Math.random() * 0.5 + 0.1,
+            duration: Math.random() * 3 + 2,
+            repeat: -1,
+            yoyo: true,
+            ease: "sine.inOut",
+          });
+        }
+      }
+
+      createParticles();
+
+      // File handling
+      const uploadArea = document.getElementById("uploadArea");
+      const fileInput = document.getElementById("fileInput");
+      const processBtn = document.getElementById("processBtn");
+      const fileInfo = document.getElementById("fileInfo");
+      const fileName = document.getElementById("fileName");
+      const fileSize = document.getElementById("fileSize");
+      const loading = document.getElementById("loading");
+      const resultSection = document.getElementById("resultSection");
+      const downloadBtn = document.getElementById("downloadBtn");
+      const errorMsg = document.getElementById("errorMsg");
+      const successMsg = document.getElementById("successMsg");
+
+      let selectedFile = null;
+
+      // Upload area interactions
+      uploadArea.addEventListener("click", () => fileInput.click());
+
+      uploadArea.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        uploadArea.classList.add("dragover");
+      });
+
+      uploadArea.addEventListener("dragleave", () => {
+        uploadArea.classList.remove("dragover");
+      });
+
+      uploadArea.addEventListener("drop", (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove("dragover");
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          handleFileSelect(files[0]);
+        }
+      });
+
+      fileInput.addEventListener("change", (e) => {
+        if (e.target.files.length > 0) {
+          handleFileSelect(e.target.files[0]);
+        }
+      });
+
+      function handleFileSelect(file) {
+        if (
+          file.type !== "text/csv" &&
+          !file.name.toLowerCase().endsWith(".csv")
+        ) {
+          showError("Please select a valid CSV file.");
+          return;
+        }
+
+        selectedFile = file;
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+
+        fileInfo.style.display = "block";
+        processBtn.classList.add("active");
+
+        gsap.fromTo(
+          fileInfo,
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.5 }
+        );
+        hideError();
+      }
+
+      function formatFileSize(bytes) {
+        if (bytes === 0) return "0 Bytes";
+        const k = 1024;
+        const sizes = ["Bytes", "KB", "MB", "GB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+      }
+
+      processBtn.addEventListener("click", async () => {
+        if (!selectedFile) {
+          showError("Please select a CSV file first.");
+          return;
+        }
+
+        showLoading();
+        hideError();
+        hideSuccess();
+
+        try {
+          const formData = new FormData();
+          formData.append("file", selectedFile);
+
+          const response = await fetch(
+            "https://primary-production-d168.up.railway.app/webhook/0dd29246-7cfe-4799-9eac-7968db40bfc4",
+            {
+              method: "POST",
+              body: formData,
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          // Check if response is a binary file (DOCX)
+          const contentType = response.headers.get("content-type");
+          if (
+            contentType &&
+            contentType.includes(
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            )
+          ) {
+            // Handle DOCX response
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+
+            downloadBtn.href = url;
+            downloadBtn.download = selectedFile.name.replace(".csv", ".docx");
+
+            hideLoading();
+            showSuccess();
+            showResult();
+          } else {
+            // Handle other response types
+            const responseData = await response.text();
+            console.log("Response:", responseData);
+
+            // For now, we'll assume the webhook returns the file directly
+            // You might need to adjust this based on your webhook's actual response format
+            throw new Error(
+              "Expected a DOCX file but received a different response format."
+            );
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          hideLoading();
+          showError(`Failed to process file: ${error.message}`);
+        }
+      });
+
+      function showLoading() {
+        loading.style.display = "block";
+        processBtn.style.display = "none";
+        gsap.fromTo(
+          loading,
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.5 }
+        );
+      }
+
+      function hideLoading() {
+        loading.style.display = "none";
+        processBtn.style.display = "inline-block";
+      }
+
+      function showResult() {
+        resultSection.style.display = "block";
+        gsap.fromTo(
+          resultSection,
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.5 }
+        );
+      }
+
+      function showSuccess() {
+        successMsg.style.display = "block";
+        gsap.fromTo(
+          successMsg,
+          { opacity: 0, scale: 0.8 },
+          { opacity: 1, scale: 1, duration: 0.5 }
+        );
+      }
+
+      function hideSuccess() {
+        successMsg.style.display = "none";
+      }
+
+      function showError(message) {
+        errorMsg.textContent = message;
+        errorMsg.style.display = "block";
+        gsap.fromTo(
+          errorMsg,
+          { opacity: 0, scale: 0.8 },
+          { opacity: 1, scale: 1, duration: 0.5 }
+        );
+      }
+
+      function hideError() {
+        errorMsg.style.display = "none";
+      }
+
+      // Add hover animations to buttons
+      document
+        .querySelectorAll(".process-btn, .download-btn")
+        .forEach((btn) => {
+          btn.addEventListener("mouseenter", () => {
+            gsap.to(btn, { scale: 1.05, duration: 0.2 });
+          });
+
+          btn.addEventListener("mouseleave", () => {
+            gsap.to(btn, { scale: 1, duration: 0.2 });
+          });
+        });
+      // Navbar scroll effect
+      window.addEventListener("scroll", function () {
+        const navbar = document.getElementById("navbar");
+        if (window.scrollY > 50) {
+          navbar.classList.add("scrolled");
+        } else {
+          navbar.classList.remove("scrolled");
+        }
+      });
+
+      // Mobile menu toggle
+      const hamburger = document.getElementById("hamburger");
+      const mobileMenu = document.getElementById("mobile-menu");
+
+      hamburger.addEventListener("click", function () {
+        hamburger.classList.toggle("active");
+        mobileMenu.classList.toggle("active");
+      });
+
+      // Close mobile menu when clicking on a link
+      const mobileLinks = mobileMenu.querySelectorAll("a");
+      mobileLinks.forEach((link) => {
+        link.addEventListener("click", function () {
+          hamburger.classList.remove("active");
+          mobileMenu.classList.remove("active");
+        });
+      });
+
+      // Close mobile menu when clicking outside
+      document.addEventListener("click", function (e) {
+        if (!hamburger.contains(e.target) && !mobileMenu.contains(e.target)) {
+          hamburger.classList.remove("active");
+          mobileMenu.classList.remove("active");
+        }
+      });
+
+      // Smooth scrolling for anchor links
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+      // Auto-update the year
+      document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>

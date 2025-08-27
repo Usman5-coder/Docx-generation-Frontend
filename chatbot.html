@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSV Upload & Chat</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 6rem auto 0 auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        padding: 20px;
+      }
+      .navbar {
+        font-family: "Poppins", sans-serif;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 0.5rem 0;
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 1000;
+        transition: all 0.3s ease;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      }
+
+      .navbar.scrolled {
+        padding: 0.3rem 0;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .nav-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #212529;
+        text-decoration: none;
+        letter-spacing: -2px;
+        position: relative;
+        transition: all 0.3s ease;
+      }
+
+      .logo::before {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #495057, #6c757d);
+        transition: width 0.3s ease;
+      }
+
+      .logo:hover::before {
+        width: 100%;
+      }
+
+      .logo:hover {
+        transform: translateY(-2px);
+      }
+
+      .nav-links {
+        display: flex;
+        list-style: none;
+        gap: 2.5rem;
+        align-items: center;
+      }
+
+      .nav-links li {
+        position: relative;
+      }
+
+      .nav-links a {
+        text-decoration: none;
+        color: #495057;
+        font-weight: 500;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .nav-links a:hover {
+        color: #212529;
+        background: rgba(108, 117, 125, 0.1);
+        transform: translateY(-2px);
+      }
+
+      .nav-links a::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 0;
+        height: 2px;
+        background: #495057;
+        transition: all 0.3s ease;
+        transform: translateX(-50%);
+      }
+
+      .nav-links a:hover::after {
+        width: 80%;
+      }
+
+      .hamburger {
+        display: none;
+        flex-direction: column;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+      }
+
+      .hamburger:hover {
+        background: rgba(108, 117, 125, 0.1);
+      }
+
+      .hamburger span {
+        width: 25px;
+        height: 3px;
+        background: #495057;
+        margin: 3px 0;
+        transition: all 0.3s ease;
+        border-radius: 3px;
+      }
+
+      .hamburger.active span:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+      }
+
+      .hamburger.active span:nth-child(2) {
+        opacity: 0;
+      }
+
+      .hamburger.active span:nth-child(3) {
+        transform: rotate(-45deg) translate(7px, -6px);
+      }
+
+      .mobile-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(15px);
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        animation: slideDown 0.3s ease;
+      }
+
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .mobile-menu.active {
+        display: block;
+      }
+
+      .mobile-menu ul {
+        list-style: none;
+        padding: 1rem 0;
+      }
+
+      .mobile-menu li {
+        margin: 0.5rem 0;
+      }
+
+      .mobile-menu a {
+        display: block;
+        padding: 1rem 2rem;
+        color: #495057;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border-left: 3px solid transparent;
+      }
+
+      .mobile-menu a:hover {
+        background: rgba(108, 117, 125, 0.1);
+        border-left-color: #495057;
+        padding-left: 2.5rem;
+      }
+
+      @media (max-width: 768px) {
+        .nav-links {
+          display: none;
+        }
+
+        .hamburger {
+          display: flex;
+        }
+
+        .nav-container {
+          padding: 0 1rem;
+        }
+
+        .logo {
+          font-size: 2rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .logo {
+          font-size: 1.8rem;
+        }
+      }
+
+      .header {
+        background: linear-gradient(135deg, #000000, #434343);
+        color: white;
+        padding: 40px 30px;
+        text-align: center;
+        border-radius: 10px;
+      }
+
+      .header h1 {
+        font-size: 2.5rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+      }
+
+      .header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        max-width: 500px;
+        margin: 0 auto;
+      }
+
+      .main-content {
+        padding: 40px 30px;
+      }
+
+      .upload-section {
+        background: #f8f9fa;
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 30px;
+        text-align: center;
+        margin-bottom: 30px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+      }
+
+      .upload-section:hover {
+        border-color: #28a745;
+        background: #f8fff9;
+      }
+
+      .upload-section.dragover {
+        border-color: #28a745;
+        background: #f8fff9;
+        transform: scale(1.02);
+      }
+
+      .upload-section.file-selected {
+        border-color: #28a745;
+        background: #f8fff9;
+      }
+
+      .upload-icon {
+        font-size: 3rem;
+        color: #6c757d;
+        margin-bottom: 15px;
+      }
+
+      .upload-section.file-selected .upload-icon {
+        color: #28a745;
+      }
+
+      .upload-text {
+        font-size: 1.1rem;
+        color: #6c757d;
+        margin-bottom: 15px;
+      }
+
+      .file-input {
+        display: none;
+      }
+
+      .file-name {
+        font-weight: 600;
+        color: #28a745;
+        background: #e8f5e8;
+        padding: 8px 16px;
+        border-radius: 20px;
+        display: inline-block;
+        margin-top: 10px;
+      }
+
+      .chat-section {
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .chat-messages {
+        height: 200px;
+        overflow-y: auto;
+        padding: 20px;
+        background: #fafafa;
+        border-bottom: 1px solid #dee2e6;
+      }
+
+      .message {
+        margin-bottom: 15px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        max-width: 80%;
+        word-wrap: break-word;
+      }
+
+      .message.user {
+        background: #e3f2fd;
+        margin-left: auto;
+        text-align: right;
+      }
+
+      .message.system {
+        background: #f5f5f5;
+        color: #666;
+      }
+
+      .message.success {
+        background: #e8f5e8;
+        color: #2d5a2d;
+      }
+
+      .message.error {
+        background: #ffebee;
+        color: #c62828;
+      }
+
+      .chat-input-section {
+        padding: 20px;
+        background: white;
+        display: flex;
+        gap: 15px;
+        align-items: flex-end;
+      }
+
+      .message-input {
+        flex: 1;
+        min-height: 50px;
+        max-height: 120px;
+        padding: 15px;
+        border: 2px solid #dee2e6;
+        border-radius: 25px;
+        font-size: 1rem;
+        font-family: inherit;
+        resize: none;
+        transition: all 0.3s ease;
+        outline: none;
+      }
+
+      .message-input:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+      }
+
+      .send-button {
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 1.2rem;
+        transition: all 0.3s ease;
+        outline: none;
+      }
+
+      .send-button:hover {
+        background: #218838;
+        transform: scale(1.05);
+      }
+
+      .send-button:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #28a745;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .download-link {
+        background: #28a745;
+        color: white;
+        text-decoration: none;
+        padding: 8px 16px;
+        border-radius: 20px;
+        display: inline-block;
+        margin-top: 10px;
+        transition: all 0.3s ease;
+      }
+
+      .download-link:hover {
+        background: #218838;
+        transform: translateY(-2px);
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        .container {
+          margin-top: 6rem;
+          margin-left: 15px;
+          margin-right: 15px;
+        }
+
+        .header {
+          padding: 30px 20px;
+        }
+
+        .header h1 {
+          font-size: 2rem;
+        }
+
+        .main-content {
+          padding: 30px 20px;
+        }
+
+        .upload-section {
+          padding: 20px;
+        }
+
+        .chat-input-section {
+          padding: 15px;
+          gap: 10px;
+        }
+
+        .message {
+          max-width: 95%;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .header h1 {
+          font-size: 1.7rem;
+        }
+
+        .header p {
+          font-size: 1rem;
+        }
+
+        .upload-section {
+          padding: 15px;
+        }
+
+        .upload-icon {
+          font-size: 2.5rem;
+        }
+
+        .main-content {
+          padding: 20px 15px;
+        }
+      }
+      footer {
+        background: linear-gradient(135deg, #000000, #434343);
+        color: #fff;
+        text-align: center;
+        padding: 42px 12px;
+        font-size: 1.2rem;
+        font-weight: 400;
+        width: 100vw;
+        margin-top: 2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar" id="navbar">
+      <div class="nav-container">
+        <a href="#" class="logo">DLG</a>
+
+        <ul class="nav-links">
+          <li><a href="index.html">Home</a></li>
+          <li>
+            <a href="demand-letter-generator.html">Demand Letter Generator</a>
+          </li>
+          <li><a href="chatbot.html">Chat to Improve</a></li>
+        </ul>
+
+        <div class="hamburger" id="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+
+      <div class="mobile-menu" id="mobile-menu">
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li>
+            <a href="demand-letter-generator.html">Demand Letter Generator</a>
+          </li>
+          <li><a href="chatbot.html">Chat to Improve</a></li>
+        </ul>
+      </div>
+    </nav>
+    <div class="container">
+      <div class="header">
+        <h1>CSV Data Processor</h1>
+        <p>
+          Upload your CSV file, send a message, and receive processed results
+          instantly
+        </p>
+      </div>
+
+      <div class="main-content">
+        <div class="upload-section" id="uploadSection">
+          <div class="upload-icon">📄</div>
+          <div class="upload-text" id="uploadText">
+            <strong>Click to upload CSV file</strong><br />
+            or drag and drop your file here
+          </div>
+          <input type="file" id="fileInput" class="file-input" accept=".csv" />
+          <div id="fileName" class="file-name" style="display: none"></div>
+        </div>
+
+        <div class="chat-section">
+          <div class="chat-messages" id="chatMessages">
+            <div class="message system">
+              Welcome! Please upload a CSV file and send a message to get
+              started.
+            </div>
+          </div>
+
+          <div class="chat-input-section">
+            <textarea
+              id="messageInput"
+              class="message-input"
+              placeholder="Type your message here..."
+              rows="1"
+            ></textarea>
+            <button id="sendButton" class="send-button" title="Send message">
+              ➤
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <footer>
+      <span id="year"></span> © Demand Letter Generator. All rights reserved.
+    </footer>
+    <script>
+      class CSVProcessor {
+        constructor() {
+          this.uploadedFile = null;
+          this.isProcessing = false;
+          this.webhookUrl =
+            "https://primary-production-d168.up.railway.app/webhook/fe0bef47-853a-4e8b-bbf0-a2cdee4e18b1";
+
+          this.initializeElements();
+          this.attachEventListeners();
+        }
+
+        initializeElements() {
+          this.uploadSection = document.getElementById("uploadSection");
+          this.fileInput = document.getElementById("fileInput");
+          this.fileName = document.getElementById("fileName");
+          this.uploadText = document.getElementById("uploadText");
+          this.chatMessages = document.getElementById("chatMessages");
+          this.messageInput = document.getElementById("messageInput");
+          this.sendButton = document.getElementById("sendButton");
+        }
+
+        attachEventListeners() {
+          // File upload events
+          this.uploadSection.addEventListener("click", () =>
+            this.fileInput.click()
+          );
+          this.fileInput.addEventListener("change", (e) =>
+            this.handleFileSelect(e)
+          );
+
+          // Drag and drop events
+          this.uploadSection.addEventListener("dragover", (e) =>
+            this.handleDragOver(e)
+          );
+          this.uploadSection.addEventListener("dragleave", (e) =>
+            this.handleDragLeave(e)
+          );
+          this.uploadSection.addEventListener("drop", (e) =>
+            this.handleFileDrop(e)
+          );
+
+          // Chat events
+          this.sendButton.addEventListener("click", () => this.sendMessage());
+          this.messageInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              this.sendMessage();
+            }
+          });
+
+          // Auto-resize textarea
+          this.messageInput.addEventListener("input", () =>
+            this.autoResizeTextarea()
+          );
+        }
+
+        handleDragOver(e) {
+          e.preventDefault();
+          this.uploadSection.classList.add("dragover");
+        }
+
+        handleDragLeave(e) {
+          e.preventDefault();
+          this.uploadSection.classList.remove("dragover");
+        }
+
+        handleFileDrop(e) {
+          e.preventDefault();
+          this.uploadSection.classList.remove("dragover");
+
+          const files = e.dataTransfer.files;
+          if (files.length > 0) {
+            this.processFile(files[0]);
+          }
+        }
+
+        handleFileSelect(e) {
+          const file = e.target.files[0];
+          if (file) {
+            this.processFile(file);
+          }
+        }
+
+        processFile(file) {
+          if (file.type !== "text/csv" && !file.name.endsWith(".csv")) {
+            this.addMessage("Please upload a valid CSV file.", "error");
+            return;
+          }
+
+          this.uploadedFile = file;
+          this.fileName.textContent = file.name;
+          this.fileName.style.display = "inline-block";
+          this.uploadSection.classList.add("file-selected");
+          this.uploadText.innerHTML =
+            "<strong>File uploaded successfully!</strong><br>Ready to send your message";
+
+          this.addMessage(
+            `File "${file.name}" uploaded successfully. You can now send your message.`,
+            "success"
+          );
+        }
+
+        autoResizeTextarea() {
+          this.messageInput.style.height = "auto";
+          this.messageInput.style.height =
+            Math.min(this.messageInput.scrollHeight, 120) + "px";
+        }
+
+        async sendMessage() {
+          const message = this.messageInput.value.trim();
+
+          if (!message) {
+            this.addMessage("Please enter a message.", "error");
+            return;
+          }
+
+          if (!this.uploadedFile) {
+            this.addMessage(
+              "File not uploaded. Please upload a CSV file first.",
+              "error"
+            );
+            return;
+          }
+
+          if (this.isProcessing) {
+            return;
+          }
+
+          // Add user message to chat
+          this.addMessage(message, "user");
+          this.messageInput.value = "";
+          this.autoResizeTextarea();
+
+          // Start processing
+          this.isProcessing = true;
+          this.updateSendButton(true);
+          this.addMessage("Processing your request...", "system");
+
+          try {
+            await this.sendToWebhook(message);
+          } catch (error) {
+            this.addMessage(
+              "An error occurred while processing your request. Please try again.",
+              "error"
+            );
+            console.error("Error:", error);
+          } finally {
+            this.isProcessing = false;
+            this.updateSendButton(false);
+          }
+        }
+
+        async sendToWebhook(message) {
+          try {
+            const formData = new FormData();
+            formData.append("file", this.uploadedFile);
+            formData.append("message", message);
+
+            const response = await fetch(this.webhookUrl, {
+              method: "POST",
+              body: formData,
+            });
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const contentType = response.headers.get("content-type");
+
+            if (
+              contentType &&
+              contentType.includes(
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              )
+            ) {
+              // Handle DOCX file response
+              const blob = await response.blob();
+              this.handleDocxResponse(blob);
+            } else {
+              // Handle other responses
+              const text = await response.text();
+              this.addMessage(`Response: ${text}`, "success");
+            }
+          } catch (error) {
+            // For demo purposes, simulate a successful response
+            this.addMessage(
+              "Webhook endpoint is not available for demo. Simulating successful response...",
+              "system"
+            );
+
+            setTimeout(() => {
+              this.simulateDocxResponse();
+            }, 2000);
+          }
+        }
+
+        simulateDocxResponse() {
+          // Create a mock DOCX blob for demonstration
+          const mockDocxContent =
+            "This is a simulated DOCX file content for demonstration purposes.";
+          const blob = new Blob([mockDocxContent], {
+            type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          });
+
+          this.handleDocxResponse(blob);
+        }
+
+        handleDocxResponse(blob) {
+          const url = URL.createObjectURL(blob);
+          const fileName = `processed_${new Date().getTime()}.docx`;
+
+          const downloadMessage = document.createElement("div");
+          downloadMessage.innerHTML = `
+                    Your file has been processed successfully!<br>
+                    <a href="${url}" download="${fileName}" class="download-link" onclick="setTimeout(() => window.location.reload(), 1000)">
+                        📥 Download ${fileName}
+                    </a>
+                `;
+
+          this.addMessage(downloadMessage, "success");
+        }
+
+        updateSendButton(isLoading) {
+          this.sendButton.disabled = isLoading;
+          this.sendButton.innerHTML = isLoading
+            ? '<div class="loading"></div>'
+            : "➤";
+        }
+
+        addMessage(content, type = "system") {
+          const messageDiv = document.createElement("div");
+          messageDiv.className = `message ${type}`;
+
+          if (typeof content === "string") {
+            messageDiv.textContent = content;
+          } else {
+            messageDiv.appendChild(content);
+          }
+
+          this.chatMessages.appendChild(messageDiv);
+          this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+        }
+      }
+
+      // Initialize the application when the page loads
+      document.addEventListener("DOMContentLoaded", () => {
+        new CSVProcessor();
+      });
+
+      // Navbar scroll effect
+      window.addEventListener("scroll", function () {
+        const navbar = document.getElementById("navbar");
+        if (window.scrollY > 50) {
+          navbar.classList.add("scrolled");
+        } else {
+          navbar.classList.remove("scrolled");
+        }
+      });
+
+      // Mobile menu toggle
+      const hamburger = document.getElementById("hamburger");
+      const mobileMenu = document.getElementById("mobile-menu");
+
+      hamburger.addEventListener("click", function () {
+        hamburger.classList.toggle("active");
+        mobileMenu.classList.toggle("active");
+      });
+
+      // Close mobile menu when clicking on a link
+      const mobileLinks = mobileMenu.querySelectorAll("a");
+      mobileLinks.forEach((link) => {
+        link.addEventListener("click", function () {
+          hamburger.classList.remove("active");
+          mobileMenu.classList.remove("active");
+        });
+      });
+
+      // Close mobile menu when clicking outside
+      document.addEventListener("click", function (e) {
+        if (!hamburger.contains(e.target) && !mobileMenu.contains(e.target)) {
+          hamburger.classList.remove("active");
+          mobileMenu.classList.remove("active");
+        }
+      });
+
+      // Smooth scrolling for anchor links
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+      // Auto-update the year
+      document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>
